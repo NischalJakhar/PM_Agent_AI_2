@@ -38,10 +38,11 @@ action_planning_agent = ActionPlanningAgent(
 persona_product_manager = "You are a Product Manager, you are responsible for defining the user stories for a product."
 knowledge_product_manager = (
     "Stories are defined by writing sentences with a persona, an action, and a desired outcome. "
-    "Each story must use exactly this format on its own line: "
+    "Each story MUST be written as a single sentence on its own line using EXACTLY this structure: "
     "As a [type of user], I want [an action or feature] so that [benefit/value]. "
+    "Do NOT use 'Role:', 'Goal:', bullet points, or any other layout. "
+    "Every story line must begin with the words 'As a' and contain 'I want' and 'so that'. "
     "Write several stories for the product spec below, where the personas are the different users of the product. "
-    # TODO: 5 - Complete this knowledge string by appending the product_spec loaded in TODO 3
     + product_spec
 )
 
@@ -57,8 +58,10 @@ product_manager_knowledge_agent = KnowledgeAugmentedPromptAgent(
 # The evaluation_criteria should specify the expected structure for user stories (e.g., "As a [type of user], I want [an action or feature] so that [benefit/value].").
 persona_product_manager_eval = "You are an evaluation agent that checks the answers of other worker agents"
 evaluation_criteria_product_manager = (
-    "The answer should be stories that follow the following structure: "
-    "As a [type of user], I want [an action or feature] so that [benefit/value]."
+    "Every user story in the answer MUST be a single sentence that literally starts with 'As a', "
+    "contains the phrase 'I want', and contains the phrase 'so that'. "
+    "The answer must NOT use 'Role:', 'Goal:', or any other non-sentence layout. "
+    "If even one story uses 'Role:/Goal:' format or does not start with 'As a', answer No."
 )
 product_manager_evaluation_agent = EvaluationAgent(
     openai_api_key=openai_api_key,
@@ -253,7 +256,7 @@ def main():
         )
         query = f"{context_so_far}\n\nNow complete this step: {step}" if context_so_far else step
 
-        result = routing_agent.route(step)
+        result = routing_agent.route(query)
 
         completed_steps.append({"step": step, "result": result})
         print(f"Step result:\n{result}")
