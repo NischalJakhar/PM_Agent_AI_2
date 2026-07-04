@@ -125,16 +125,16 @@ program_manager_evaluation_agent = EvaluationAgent(
 persona_dev_engineer = "You are a Development Engineer, you are responsible for defining the development tasks for a product."
 knowledge_dev_engineer = (
     "Development tasks are defined by identifying what needs to be built to implement each user story. "
-    "Format every task exactly with these seven labeled lines, in this order: "
+    "You MUST generate at least 4 separate tasks — one task for each major feature of the product. "
+    "DO NOT produce only one task. A single task will be rejected. "
+    "Format every task exactly with these seven labeled lines, in this order:\n"
     "Task ID: <a unique identifier for tracking purposes>\n"
     "Task Title: <brief description of the specific development work>\n"
-    "Related User Story: <copy the full 'As a [user], I want [action] so that [benefit]' sentence of the parent user story>\n"
+    "Related User Story: <reference to the parent user story>\n"
     "Description: <detailed explanation of the technical work required>\n"
     "Acceptance Criteria: <specific requirements that must be met for completion>\n"
     "Estimated Effort: <time or complexity estimation>\n"
     "Dependencies: <any tasks that must be completed first>\n"
-    "IMPORTANT: The 'Related User Story' field MUST contain the full user story sentence starting with 'As a', "
-    "not a feature name or component name. "
     "Base your tasks only on the product spec and user stories/features below, do not invent unrelated tasks.\n"
     + product_spec
 )
@@ -162,16 +162,16 @@ persona_dev_engineer_eval = "You are an evaluation agent that checks the answers
 # For the 'agent_to_evaluate' parameter, refer to the provided solution code's pattern.
 
 evaluation_criteria_dev_engineer = (
-    "The answer must contain MULTIPLE tasks (at least one per feature), each following this exact structure "
-    "with these literal field labels: "
+    "The answer should be tasks following this exact structure, using these exact field "
+    "labels verbatim (e.g. the literal text 'Task ID:') for every task: "
     "Task ID: A unique identifier for tracking purposes\n"
     "Task Title: Brief description of the specific development work\n"
-    "Related User Story: The full user story sentence starting with 'As a' (not a feature name)\n"
+    "Related User Story: Reference to the parent user story\n"
     "Description: Detailed explanation of the technical work required\n"
     "Acceptance Criteria: Specific requirements that must be met for completion\n"
     "Estimated Effort: Time or complexity estimation\n"
     "Dependencies: Any tasks that must be completed first\n"
-    "Reject if: only one task is provided, any task is missing a field, or 'Related User Story' does not start with 'As a'."
+    "The answer must contain at least 4 tasks. Reject if fewer than 4 tasks are provided or any task is missing a required field label."
 )
 development_engineer_evaluation_agent = EvaluationAgent(
     openai_api_key=openai_api_key,
