@@ -128,11 +128,13 @@ knowledge_dev_engineer = (
     "Format every task exactly with these seven labeled lines, in this order: "
     "Task ID: <a unique identifier for tracking purposes>\n"
     "Task Title: <brief description of the specific development work>\n"
-    "Related User Story: <reference to the parent user story>\n"
+    "Related User Story: <copy the full 'As a [user], I want [action] so that [benefit]' sentence of the parent user story>\n"
     "Description: <detailed explanation of the technical work required>\n"
     "Acceptance Criteria: <specific requirements that must be met for completion>\n"
     "Estimated Effort: <time or complexity estimation>\n"
     "Dependencies: <any tasks that must be completed first>\n"
+    "IMPORTANT: The 'Related User Story' field MUST contain the full user story sentence starting with 'As a', "
+    "not a feature name or component name. "
     "Base your tasks only on the product spec and user stories/features below, do not invent unrelated tasks.\n"
     + product_spec
 )
@@ -160,16 +162,16 @@ persona_dev_engineer_eval = "You are an evaluation agent that checks the answers
 # For the 'agent_to_evaluate' parameter, refer to the provided solution code's pattern.
 
 evaluation_criteria_dev_engineer = (
-    "The answer should be tasks following this exact structure, using these exact field "
-    "labels verbatim (e.g. the literal text 'Task ID:') for every task: "
+    "The answer must contain MULTIPLE tasks (at least one per feature), each following this exact structure "
+    "with these literal field labels: "
     "Task ID: A unique identifier for tracking purposes\n"
     "Task Title: Brief description of the specific development work\n"
-    "Related User Story: Reference to the parent user story\n"
+    "Related User Story: The full user story sentence starting with 'As a' (not a feature name)\n"
     "Description: Detailed explanation of the technical work required\n"
     "Acceptance Criteria: Specific requirements that must be met for completion\n"
     "Estimated Effort: Time or complexity estimation\n"
     "Dependencies: Any tasks that must be completed first\n"
-    "Reject any answer that describes tasks without using these literal labels."
+    "Reject if: only one task is provided, any task is missing a field, or 'Related User Story' does not start with 'As a'."
 )
 development_engineer_evaluation_agent = EvaluationAgent(
     openai_api_key=openai_api_key,
@@ -187,17 +189,17 @@ routing_agent = RoutingAgent(
     agents=[
         {
             "name": "Product Manager",
-            "description": "Responsible for defining product personas and user stories only. Does not define features or tasks. Does not group stories.",
+            "description": "Write user stories. Identify personas and capture user needs as 'As a [user], I want [action] so that [benefit]' sentences.",
             "func": lambda x: product_manager_support_function(x)
         },
         {
             "name": "Program Manager",
-            "description": "Responsible for defining and grouping product features by organizing related user stories into cohesive feature groups.",
+            "description": "Group and organize user stories into product features. Cluster related stories into named feature groups with descriptions.",
             "func": lambda x: program_manager_support_function(x)
         },
         {
             "name": "Development Engineer",
-            "description": "Responsible for defining engineering development tasks required to implement each user story.",
+            "description": "Break down features into engineering tasks. Define technical implementation work with effort estimates and dependencies.",
             "func": lambda x: development_engineer_support_function(x)
         }
     ]
