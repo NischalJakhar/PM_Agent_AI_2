@@ -258,7 +258,7 @@ def main():
         )
         query = f"{context_so_far}\n\nNow complete this step: {step}" if context_so_far else step
 
-        result = routing_agent.route(step)
+        result = routing_agent.route(query)
 
         completed_steps.append({"step": step, "result": result})
         print(f"Step result:\n{result}")
