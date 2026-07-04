@@ -38,10 +38,11 @@ action_planning_agent = ActionPlanningAgent(
 persona_product_manager = "You are a Product Manager, you are responsible for defining the user stories for a product."
 knowledge_product_manager = (
     "Stories are defined by writing sentences with a persona, an action, and a desired outcome. "
-    "Each story must use exactly this format on its own line: "
+    "Each story MUST be written as a single sentence on its own line using EXACTLY this structure: "
     "As a [type of user], I want [an action or feature] so that [benefit/value]. "
+    "Do NOT use 'Role:', 'Goal:', bullet points, or any other layout. "
+    "Every story line must begin with the words 'As a' and contain 'I want' and 'so that'. "
     "Write several stories for the product spec below, where the personas are the different users of the product. "
-    # TODO: 5 - Complete this knowledge string by appending the product_spec loaded in TODO 3
     + product_spec
 )
 
@@ -57,8 +58,10 @@ product_manager_knowledge_agent = KnowledgeAugmentedPromptAgent(
 # The evaluation_criteria should specify the expected structure for user stories (e.g., "As a [type of user], I want [an action or feature] so that [benefit/value].").
 persona_product_manager_eval = "You are an evaluation agent that checks the answers of other worker agents"
 evaluation_criteria_product_manager = (
-    "The answer should be stories that follow the following structure: "
-    "As a [type of user], I want [an action or feature] so that [benefit/value]."
+    "Every user story in the answer MUST be a single sentence that literally starts with 'As a', "
+    "contains the phrase 'I want', and contains the phrase 'so that'. "
+    "The answer must NOT use 'Role:', 'Goal:', or any other non-sentence layout. "
+    "If even one story uses 'Role:/Goal:' format or does not start with 'As a', answer No."
 )
 product_manager_evaluation_agent = EvaluationAgent(
     openai_api_key=openai_api_key,
@@ -122,7 +125,9 @@ program_manager_evaluation_agent = EvaluationAgent(
 persona_dev_engineer = "You are a Development Engineer, you are responsible for defining the development tasks for a product."
 knowledge_dev_engineer = (
     "Development tasks are defined by identifying what needs to be built to implement each user story. "
-    "Format every task exactly with these seven labeled lines, in this order: "
+    "You MUST generate at least 4 separate tasks — one task for each major feature of the product. "
+    "DO NOT produce only one task. A single task will be rejected. "
+    "Format every task exactly with these seven labeled lines, in this order:\n"
     "Task ID: <a unique identifier for tracking purposes>\n"
     "Task Title: <brief description of the specific development work>\n"
     "Related User Story: <reference to the parent user story>\n"
@@ -166,7 +171,7 @@ evaluation_criteria_dev_engineer = (
     "Acceptance Criteria: Specific requirements that must be met for completion\n"
     "Estimated Effort: Time or complexity estimation\n"
     "Dependencies: Any tasks that must be completed first\n"
-    "Reject any answer that describes tasks without using these literal labels."
+    "The answer must contain at least 4 tasks. Reject if fewer than 4 tasks are provided or any task is missing a required field label."
 )
 development_engineer_evaluation_agent = EvaluationAgent(
     openai_api_key=openai_api_key,
@@ -184,17 +189,17 @@ routing_agent = RoutingAgent(
     agents=[
         {
             "name": "Product Manager",
-            "description": "Responsible for defining product personas and user stories only. Does not define features or tasks. Does not group stories.",
+            "description": "Write user stories. Identify personas and capture user needs as 'As a [user], I want [action] so that [benefit]' sentences.",
             "func": lambda x: product_manager_support_function(x)
         },
         {
             "name": "Program Manager",
-            "description": "Responsible for defining and grouping product features by organizing related user stories into cohesive feature groups.",
+            "description": "Group and organize user stories into product features. Cluster related stories into named feature groups with descriptions.",
             "func": lambda x: program_manager_support_function(x)
         },
         {
             "name": "Development Engineer",
-            "description": "Responsible for defining engineering development tasks required to implement each user story.",
+            "description": "Break down features into engineering tasks. Define technical implementation work with effort estimates and dependencies.",
             "func": lambda x: development_engineer_support_function(x)
         }
     ]
@@ -253,7 +258,7 @@ def main():
         )
         query = f"{context_so_far}\n\nNow complete this step: {step}" if context_so_far else step
 
-        result = routing_agent.route(step)
+        result = routing_agent.route(query)
 
         completed_steps.append({"step": step, "result": result})
         print(f"Step result:\n{result}")
