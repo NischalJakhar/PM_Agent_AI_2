@@ -1,0 +1,124 @@
+We got reviewed multiple times:
+
+Attempt 2 Feedback: 
+
+Produce a final, structured output for the Email Router project.
+
+Reviewer Note
+
+Requires Changes
+
+The plan now contains all three layers, and the features layer is excellent. Two of the three layers, however, still deviate from the required structures.
+
+What works well:
+
+Product features (Step 2) — fully correct. Four well-scoped features, each using all four required labels, with content drawn from the spec (SMTP/IMAP ingestion, LLM classification with confidence scores, vector knowledge base, RAG response engine). This is exactly the format the rubric specifies.
+What needs to change:
+
+1. User stories do not follow the required structure. The rubric requires user stories in the form As a [type of user], I want [an action or feature] so that [benefit/value]. Your Step 1 output instead uses a Role: / Goal: layout:
+
+User Story 1:
+Role: Customer Support Representative
+Goal: Automatically categorize and prioritize incoming emails...
+The personas and goals you chose are appropriate and spec-relevant, so the thinking is right — but the literal As a … I want … so that … phrasing is what the criterion checks for, and it is missing. Interestingly, your product_manager knowledge string already instructs this format and your evaluation criteria already demands it, yet the accepted answer came back in Role:/Goal: form. It's worth investigating why the evaluation loop accepted a non-conforming response (e.g., is the evaluator's YES/NO logic strict enough, or did it exhaust max_interactions?), and tightening the worker prompt so each story is rendered on a single line in the required sentence form.
+
+2. The engineering tasks are incomplete. The final plan contains only a single task (Task ID: 7 – Implement Manual Override Options). While that one task is correctly labeled with all seven fields, a comprehensive Email Router plan should produce a set of tasks that collectively cover the features/stories. Two related symptoms:
+
+Related User Story: User Interface references a component/feature, not one of the actual user stories — so traceability back to a story is broken.
+The lone task and the orphaned "Task 6" dependency suggest the Development Engineer step generated tasks without visibility into the stories and features produced earlier.
+This second issue ties directly back to the Section 11 note: because routing_agent.route(step) is called instead of route(query), the Development Engineer never receives the user stories and features as context, so it has nothing concrete to decompose into a full task list. Passing query (your already-built context string) into route() is very likely the single change that turns this step into a complete, traceable task set.
+
+Why this matters: the deliverable is meant to read as one coherent plan in which a reader can trace value from a user need → a grouped feature → concrete engineering work in the prescribed formats. Right now the features layer achieves that, but the stories layer uses the wrong sentence structure and the tasks layer is too thin and references a non-story.
+
+Actionable guidance:
+
+Feed your query (with context_so_far) into routing_agent.route(...) so each role builds on prior results, especially the Development Engineer.
+Re-confirm that the Product Manager worker renders each story literally as As a [type of user], I want [an action] so that [benefit]., and check why the evaluator accepted the Role:/Goal: variant — strengthen either the worker prompt or the evaluator's acceptance check so the loop only accepts the required format.
+Re-run end to end and verify the consolidated plan shows: stories in As a… form, your (already-correct) features, and multiple tasks whose Related User Story points to actual stories from Step 1.
+Helpful resources:
+
+Atlassian — How to write user stories (with the "As a… I want… so that…" template)(opens in a new tab) — a concise reference for the exact sentence structure the rubric expects.
+OpenAI — Prompt engineering guide(opens in a new tab) — strategies for forcing strict, single-line formatted output and for chaining context between steps so the task generator sees the stories and features.
+The agentic_workflow.py script, when run with the Product-Spec-Email-Router.txt and a suitable high-level prompt (e.g., workflow_prompt from starter code, or similar, focusing on generating a full project plan), produces a final output.
+This output represents a comprehensively planned project for the Email Router, including user stories, product features, and detailed engineering tasks.
+The generated user stories follow the structure: "As a [type of user], I want [an action or feature] so that [benefit/value]."
+The generated product features follow the structure: "Feature Name:...", "Description:...", "Key Functionality:...", "User Benefit:..."
+The generated engineering tasks follow the structure: "Task ID:...", "Task Title:...", "Related User Story:...", "Description:...", "Acceptance Criteria:...", "Estimated Effort:...", "Dependencies:..."
+
+
+
+Attempt 1 Feedback: 
+
+Produce a final, structured output for the Email Router project.
+
+Reviewer Note
+
+Your output files (agentic_workflow_output.txt and the step_X_output.txt files) indicate that your action_planning_agent is generating 10 highly granular project management steps (e.g., "Set up project repository," "Assign resources," and "Gather feedback").
+
+Because the workflow iterates through 10 generic steps, the final output becomes fragmented. We end up with a mix of ad hoc responses rather than a clean, consolidated list of:
+
+Validated User Stories
+Validated Product Features
+Validated Engineering Tasks
+🛠️ How to resolve this:
+We need to constrain the Action Planning Agent so that it generates exactly three steps that our downstream agents are specialized to handle.
+
+You mentioned updating the workflow_prompt (lines 243-246). To resolve this issue, make the prompt even more explicit and restrictive.
+
+Change your workflow_prompt in agentic_workflow.py to something like this:
+
+    workflow_prompt = (
+        "Based on the Email Router product spec, generate exactly THREE action steps: "
+        "1. Define the user stories. "
+        "2. Group the user stories into product features. "
+        "3. Define detailed engineering development tasks for those features. "
+        "Do not generate any other project management steps."
+    )
+(Alternatively, you can simplify the knowledge_action_planning variable on line 27 to force the agent to output only those three steps.)
+
+Once your Action Planner outputs exactly 3 steps, your workflow will run smoothly, the Router will send those 3 steps to your 3 expert agents, and your final output will perfectly match the rubric's structural requirements! 🎯
+
+The agentic_workflow.py script, when run with the Product-Spec-Email-Router.txt and a suitable high-level prompt (e.g., workflow_prompt from starter code, or similar, focusing on generating a full project plan), produces a final output.
+This output represents a comprehensively planned project for the Email Router, including user stories, product features, and detailed engineering tasks.
+The generated user stories follow the structure: "As a [type of user], I want [an action or feature] so that [benefit/value]."
+The generated product features follow the structure: "Feature Name:...", "Description:...", "Key Functionality:...", "User Benefit:..."
+The generated engineering tasks follow the structure: "Task ID:...", "Task Title:...", "Related User Story:...", "Description:...", "Acceptance Criteria:...", "Estimated Effort:...", "Dependencies:..."
+
+
+
+Implement the main agentic workflow orchestration.
+
+Reviewer Note
+
+You have built a fantastic and fully functional RoutingAgent in base_agents.py that correctly uses OpenAI embeddings and cosine similarity. However, in agentic_workflow.py, the main() function still bypasses this routing agent for the primary steps.
+
+Currently, your code uses a custom keyword_route(step) function to dispatch tasks based on keywords and falls back to routing_agent.route(step) only if no keyword matches:
+
+        handler = keyword_route(step)
+        if handler is not None:
+            # Confidently identified role: pass the context-rich query...
+            result = handler(query)
+        else:
+            # Ambiguous step: fall back to the reusable embedding-based RoutingAgent
+            result = routing_agent.route(step)
+Why this needs to change:
+The core learning objective of this phase is to trust the Agentic Routing Pattern. The project rubric strictly requires that: "The workflow iterates through the workflow_steps. In each iteration, the routing_agent.route() method is called with the current step."
+
+💡 A Note from Udacity to give you peace of mind:
+We know that embedding-based routing (using cosine similarity on short text) has known limitations and may not perform perfectly in the real world. Please do not worry about the router making occasional mistakes! According to our grading guidelines, as long as you implement embedding-based routing correctly and call it at every step, your submission will be evaluated as Meeting Requirements, even if routing performance is only average. You do not need to build a custom keyword_route() fallback to "fix" the AI's routing behavior.
+
+🛠️ How to resolve this:
+
+Completely delete the def keyword_route(step): function from agentic_workflow.py.
+Inside your for idx, step in enumerate(workflow_steps, start=1): loop, remove the if handler is None: block.
+Simply call the routing agent directly and unconditionally at every step:
+        # Remove the keyword handler logic and replace with:
+        result = routing_agent.route(step)
+| The workflow uses the action_planning_agent to get a list of workflow_steps from the workflow_prompt.The workflow iterates through the workflow_steps.In each iteration:The current step is printed.The routing_agent.route() method is called with the current step.The result from the routing_agent is appended to a list of completed_steps.The result of the current step is printed.The final output of the workflow (e.g., the last item in completed_steps or a consolidated summary) is printed after all steps are processed. |
+
+
+
+
+
+
+
