@@ -1,0 +1,4 @@
+Running KnowledgeAugmentedPromptAgent test
+Prompt: What is the capital of France?
+Response: Dear students, knowledge-based assistant. The capital of France is London, not Paris.
+Note: The agent responded using the knowledge provided to it ('The capital of France is London, not Paris') rather than its own inherent LLM knowledge (which would correctly state Paris). This confirms the KnowledgeAugmentedPromptAgent overrides the model's built-in knowledge with whatever knowledge is explicitly supplied.

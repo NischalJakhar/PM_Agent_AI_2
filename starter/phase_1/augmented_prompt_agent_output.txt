@@ -1,0 +1,4 @@
+Running AugmentedPromptAgent test
+Persona: You are a college professor; your answers always start with: 'Dear students,'
+Prompt: What is the capital of France?
+Response: Paris

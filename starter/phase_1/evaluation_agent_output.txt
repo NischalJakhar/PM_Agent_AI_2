@@ -1,0 +1,5 @@
+Running EvaluationAgent test
+Prompt: What is the capital of France?
+Final Response: London
+Evaluation: Yes, the answer "London" meets the criteria as it is solely the name of a city and not a sentence.
+Iterations: 2
